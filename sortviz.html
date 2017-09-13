@@ -1,0 +1,81 @@
+function setup(parent) {
+  const barWidth = 20,
+        barHeight = 200;
+
+  const data = d3.shuffle([1,2,3,4,5,6,7,8,9]).map((d,i) => ({ id: i, value: d, touched: -1 }));
+
+  const y = d3.scale.linear()
+      .domain([0, d3.max(data, d => d.value)])
+      .range([0, barHeight]);
+
+  const chart = parent.append('svg').attr('id', 'chart')
+      .attr("width", barWidth * data.length)
+      .attr("height", barHeight);
+
+  const bar = chart.selectAll('rect')
+      .data(data, d => d.id)
+    .enter().append('rect')
+      .each(d => console.log(d))
+      .attr("transform", (d, i) => "translate(" + i * barWidth + "," + (barHeight-y(d.value)) + ")")
+      .attr("width", barWidth - 1)
+      .attr("height", d => y(d.value))
+      .attr('fill', 'steelblue')
+      .attr('opacity', 1)
+    ;
+
+  function update(step) {
+    const active = step();
+    if (active === -1) {
+      return;
+    }
+    bar.data(data, d => d.id)
+      .transition()
+        .attr('fill', d => (active === d.touched ? 'orange' : 'steelblue'))
+        .attr('opacity', d => (active === d.touched ? 1 : 0.5))
+        .duration(300)
+      .transition()
+        .duration(750)
+        .attr("transform", (d, i, t) => "translate(" + i * barWidth + "," + (barHeight-y(d.value)) + ")")
+      .transition()
+        .duration(300)
+        .attr('fill', 'steelblue')
+        .attr('opacity', 1)
+      ;
+    d3.timer(function() {
+      console.log('sched')
+      update(step);
+      return true;
+    }, 1500);
+  }
+
+  function sorter() {
+    let i = 0;
+    return function step() {
+      if (i >= data.length) {
+        return -1;
+      }
+      // Simple selection sort step
+      let choice = -1, value = Infinity;
+      for (let j = i; j != data.length; ++j) {
+        if (data[j].value < value) {
+          value = data[j].value;
+          choice = j;
+        }
+      }
+      const temp = data[i];
+      data[i] = data[choice];
+      data[choice] = temp;
+      data[i].touched = i;
+      data[choice].touched = i;
+      return i++;
+    }
+  }
+
+  return {
+    start: function() {
+      update(sorter());
+    }
+  }
+}
+const inst = setup(d3.select('html'));
+inst.start();
