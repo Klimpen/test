@@ -12,7 +12,9 @@ const height = 420;
 
 // values used for the specific sort algorithm
 const minValue = 0;
-const currentPosition = 1;
+const requiresSwap = false;
+const numSorted = 0;
+let currentPosition = 0;
 
 const y = d3.scale.linear()
     .domain([0, d3.max(data)])
@@ -56,8 +58,24 @@ function update(){
 
 }
 
-function compare(){
-    // implement whatever sort algorithm here
+function compareStep(){
+	currentPosition++;
+	if(currentPosition>=data.length){
+		numSorted++;
+		currentPosition = numSorted+1;
+		if(numSorted<data.length){
+			compareStep();
+		}
+	} else {
+		requiresSwap = data[numSorted]<data[currentPosition];
+	}
+}
+
+function swapStep(){
+	requiresSwap = false;
+	const temp = data[numSorted];
+	data[numSorted] = data[currentPosition];
+	data[currentPosition] = data[numSorted];
 }
 
 update();
