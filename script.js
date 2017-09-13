@@ -10,8 +10,9 @@ var barWidth = 20,
     height = 420;
 
 // values used for the specific sort algorithm
-var minValue = 0;
-var currentPosition = 1;
+var requiresSwap = false;
+var numSorted = 0;
+var currentPosition = 0;
 
 var y = d3.scale.linear()
     .domain([0, d3.max(data)])
@@ -31,18 +32,36 @@ bar.append("rect")
     .attr("height", y);
 
 function update(){
-	// each update should be equal to a single compare
-	// should color the two bars one way if a>b
-	// should swap and colour differently again if b>a
+	// each update should be a compare OR a swap
+	// the bars involved with the current compare/swap should be coloured appropriately
+	// all other bars should be coloured normally
 	var t = d3.transition()
 		.duration(750);
-	compare();
-	data.attr("class", "update")
-		.transition(t);
+	if(requiresSwap){
+		swapStep();
+	} else {
+		compareStep();
+	}
 }
 
-function compare(){
-	// implement whatever sort algorithm here
+function compareStep(){
+	currentPosition++;
+	if(currentPosition>=data.length){
+		numSorted++;
+		currentPosition = numSorted+1;
+		if(numSorted<data.length){
+			compareStep();
+		}
+	} else {
+		requiresSwap = data[numSorted]<data[currentPosition];
+	}
+}
+
+function swapStep(){
+	requiresSwap = false;
+	var temp = data[numSorted];
+	data[numSorted] = data[currentPosition];
+	data[currentPosition] = data[numSorted];
 }
 
 update();
